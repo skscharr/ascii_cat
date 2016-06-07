@@ -26,6 +26,9 @@ def _scale_image(image, new_width=100):
 
 
 def _convert_to_grayscale(image):
+    """
+    convert image to grascale
+    """
     return image.convert('L')
 
 
@@ -46,6 +49,12 @@ def _map_pixels_to_ascii_chars(image, range_width=25):
 
 
 def _convert_image_to_ascii(image, new_width=100):
+    """
+    First scale image to 100px and convert it to grayscale, then map
+    the grayscale image to ascii characters in an array.
+
+    Returns the array as text where each sub-array is an individual row
+    """
     scaled_image = _scale_image(image)
     grayscale_image = _convert_to_grayscale(scaled_image)
 
@@ -61,6 +70,9 @@ def _convert_image_to_ascii(image, new_width=100):
 
 
 def handle_image_conversion(image_file):
+    """
+    Convert an image to ascii characters and print image.
+    """
     img = None
     try:
         img = Image.open(img_file)
