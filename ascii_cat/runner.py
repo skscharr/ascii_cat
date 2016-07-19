@@ -3,7 +3,9 @@ Entry point for the ascii_cat CLI
 """
 import sys
 import argparse
-import get_cats
+from ascii_cat import __version__
+from ascii_cat import ascii_converter
+from ascii_cat import get_cats
 
 
 def cats_options(parser):
@@ -11,20 +13,11 @@ def cats_options(parser):
     Add arguments to the cats command
     """
     parser.add_argument(
-        '--breed',
+        '--breeds',
         help=(
             'List of cat breeds to search by. At least one must be '
             'specified if the parameter is chosen. Max 5.'),
         nargs='+')
-    parser.add_argument(
-        '--color',
-        help=(
-            'Dominant color to search by. Available choices are black, blue, '
-            'brown, gray, green, pink, purple, teal, white, and yellow. '
-            'Select only 1'),
-        choices=[
-            "black", "blue", "brown", "gray", "green", "pink", "purple",
-            "teal", "white", "yellow"])
     parser.add_argument(
         '--fluffy',
         help='Search for fluffy kitties',
@@ -45,13 +38,7 @@ def cats_options(parser):
             '1 to 5 more query parameters here.'),
         nargs="+")
 
-
 def meme_options(parser):
-    """
-    Add arguments to the meme command. This command is grouped to
-    restrict the options allowing the user to select only one, and
-    one must be selected.
-    """
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
         '--grumpy',
@@ -110,7 +97,8 @@ def build_parser(args):
 
     meme = subparsers.add_parser(
         'meme',
-        help='Search for images by popular cat memes')
+        help='Find cat memes'
+    )
     meme_options(meme)
 
     random = subparsers.add_parser(
@@ -120,11 +108,11 @@ def build_parser(args):
 
     opts = parser.parse_args(args)
 
-    if opts.subcommand == 'cats' and (opts.breeds or opts.other):
-        if len(opts.breeds) > 5:
+    if opts.command == 'cats':
+        if opts.breeds and len(opts.breeds) > 5:
             cats.error(
                 'Too many breeds specified! Max of 5 breeds allowed in query')
-        if len(opts.other) > 5:
+        if opts.other and len(opts.other) > 5:
             cats.error(
                 'Too many additional query args! Max of 5 allowed!')
 
@@ -137,10 +125,14 @@ def main(argv=None):
 
     opts = build_parser(argv)
 
-    query = construct_query(opts)
-    search_results = get_cats.search()
+    query = get_cats.construct_query(opts)
+    search_results = get_cats.search(query=query)
+    selection = get_cats.select_results(search_results, num_results=opts.number)
 
-
+    for img_resp in selection:
+        img = get_cats.get_image_content(img_resp['link'])
+        if img is not None:
+            print(ascii_converter.handle_image_conversion(img))
 
 if __name__ == '__main__':
     main()

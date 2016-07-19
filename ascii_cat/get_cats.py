@@ -1,5 +1,7 @@
 import json
+import random
 import requests
+from StringIO import StringIO
 from googleapiclient.discovery import build
 
 
@@ -13,7 +15,7 @@ def construct_query(opts):
     custom search engine
     """
     query_args = ['cats']
-    if opts.subcommand == 'cats':
+    if opts.command == 'cats':
         if opts.breeds:
             for breed in opts.breeds:
                 query_args.append(breed)
@@ -27,9 +29,8 @@ def construct_query(opts):
         if opts.kitten:
             query_args.append('kitten')
 
-    if opts.subcommand == 'meme':
-        query_args.append('meme')
-        if opts.grumpy
+    if opts.command == 'meme':
+        if opts.grumpy:
             query_args.append('gumpy cat')
         if opts.bubs:
             query_args.append('bubs')
@@ -44,7 +45,7 @@ def construct_query(opts):
         if opts.longcat:
             query_args.append('longcat')
 
-    if opts.subcommand == 'random':
+    if opts.command == 'random':
         query_args += ['cute', 'kitten', 'kitty']
 
     joined_args = ' '.join(query_args)
@@ -52,28 +53,38 @@ def construct_query(opts):
     return joined_args
 
 def get_image_content(image_url):
+    print image_url
     img_content = None
 
     response = requests.get(image_url)
-    response.raise_for_status()
-
-    # use StringIO for python 2
-    if sys.version_info[0] == 2:
-        from StringIO import StringIO
-        img_content = StringIO(response.content)
-    # use BytesIO for python 3
-    if sys.version_info[0] == 3:
-        from io import BytesIO
-        img_content = BytesIO(response.content)
+    if response.status_code != 200:
+        print('Whoops! Error getting image')
+        return
+    img_content = StringIO(response.content)
 
     return img_content
 
 
-def select_results(query_resp):
-    pass
+def select_results(query_resp, num_results=1):
+    """
+    Select the results to return.
+    """
+    result = []
+    N = 0
+
+    for item in query_resp:
+        N += 1
+        if len(result) < num_results:
+            result.append(item)
+        else:
+            s = int(random.random() * N)
+            if s < num_results:
+                result[s] = item
+
+    return result
 
 
-def search(query=None, color=None):
+def search(query=None):
     """
     Use Google Custom Search Engine (CSE) to query the web for kitty images.
 
@@ -86,7 +97,8 @@ def search(query=None, color=None):
     if not query:
         return "No search parameters passed in!"
 
-    with open('.credentials.json') as key:
+    with open('ascii_cat/.credentials.json') as key_file:
+        key = json.load(key_file)
         api_key = key.get("google_search_api_key")
         engine = key.get("google_search_engine")
     service = build('customsearch', 'v1', developerKey=api_key)
@@ -95,11 +107,10 @@ def search(query=None, color=None):
         q=json.dumps(query),
         cx=engine,
         safe='high',
-        searchType='image',
-        imgDominantColor=color
+        searchType='image'
     ).execute()
 
-    if not 'items' in response:
+    if response['searchInformation']['totalResults'] == 0:
         return 'No images found matching your search terms :('
 
     return response['items']

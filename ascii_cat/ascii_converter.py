@@ -42,7 +42,7 @@ def _map_pixels_to_ascii_chars(image, range_width=25):
 
     pixels_in_image = list(image.getdata())
     pixels_to_chars = [
-        ASCII_CHARS[pixel_value/range_width] for pixel_value inpixels_in_image
+        ASCII_CHARS[pixel_value/range_width] for pixel_value in pixels_in_image
     ]
 
     return "".join(pixels_to_chars)
@@ -69,7 +69,7 @@ def _convert_image_to_ascii(image, new_width=100):
     return "\n".join(image_ascii)
 
 
-def handle_image_conversion(image_file):
+def handle_image_conversion(img_file):
     """
     Convert an image to ascii characters and print image.
     """
