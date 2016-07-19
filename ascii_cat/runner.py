@@ -86,7 +86,8 @@ def build_parser(args):
         ),
         choices=range(1, 6),
         type=int,
-        default=1)
+        default=1,
+        metavar="N")
 
     subparsers = parser.add_subparsers(title='Commands', dest='command')
 
